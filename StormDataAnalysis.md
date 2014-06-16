@@ -1,17 +1,33 @@
-Title
+Effects of storms and major weather events in U.S.
 ========================================================
 
 # Synopsis
+The U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database tracks characteristics of major storms and weather events in the United States. For each event collected in the database, the following data is available:
+* when and where they occur
+* estimates of injuries
+* estimates of fatalities
+* estimates of property damages
+
+The purpose of this document is to explore some general characteristics of the given data, namely:
+* which types of events are most harmful with respect to population health?
+* which types of events have the greatest economic consequences?
+
+The given database contains data from year 1950 until November 2011.
+
+The following analysis shows that the majority of human injuries and fatalities are caused by Tornado.
+The majority of the economic damages are caused by Flood.
 
 # Data Processing
+The database is given as a single csv file, compressed with the bzip algorithm. The file can be read straightforwardly with the read.csv function:
+
 
 ```r
 storm <- read.csv("repdata-data-StormData.csv.bz2")
-numObs <- dim(storm)
+numObs <- dim(storm)[1]
 ```
 
 
-According to the provided documentation, the possible events should be 48. Unfortunately, perhaps because of a not enough guided data entry procedure, across all 902297, 37 observations the number of possible events is much higher, in fact it is almost 1000:
+According to the provided documentation, the possible events should be 48. Unfortunately, perhaps because of a not enough guided data entry procedure, across all 902297 observations the number of possible events is much higher, in fact it is almost 1000:
 
 ```r
 length(levels(storm$EVTYPE))
@@ -21,12 +37,13 @@ length(levels(storm$EVTYPE))
 ## [1] 985
 ```
 
+
 Anyway, the questions that we are asked to answer are the following:
 
 * Across the United States, which types of events (as indicated in the EVTYPE variable) are most harmful with respect to population health?
 * Across the United States, which types of events have the greatest economic consequences?
 
-So, even if our original data contain more than 900000 samples, we can restrict our analysis to those samples that have at least one of the following columns not equal to 0:
+So, even if our original data contain 902297 samples, we can restrict our analysis to those samples that have at least one of the following columns not equal to 0:
 * FATALITIES
 * INJURIES
 * PROPDMG
@@ -39,7 +56,7 @@ storm <- storm[(storm$FATALITIES != 0) | (storm$INJURIES != 0) | (storm$PROPDMG 
 ```
 
 
-Furthermore, only a subset of the available columns are necessary for our analysis, so we can subset our original dataframe like this:
+Moreover, only a subset of the available columns are necessary for our analysis, so we can subset our original dataframe like this:
 
 
 ```r
@@ -67,27 +84,27 @@ Now we need to normalize the *PROPDMGEXP* and *CROPDMGEXP* because, in the form 
 storm$storm.PROPDMGEXP <- as.character(storm$storm.PROPDMGEXP)
 storm$storm.CROPDMGEXP <- as.character(storm$storm.CROPDMGEXP)
 
-storm$storm.PROPDMGEXP[(storm$storm.PROPDMGEXP == "")] <- 0
+storm$storm.PROPDMGEXP[(storm$storm.PROPDMGEXP == "")] <- 0  #empty string is 0
 storm$storm.PROPDMGEXP[(storm$storm.PROPDMGEXP == "+") | (storm$storm.PROPDMGEXP == 
-    "-") | (storm$storm.PROPDMGEXP == "?")] <- 1
+    "-") | (storm$storm.PROPDMGEXP == "?")] <- 1  # '+', '-', '?' are mapped to 1
 storm$storm.PROPDMGEXP[(storm$storm.PROPDMGEXP == "h") | (storm$storm.PROPDMGEXP == 
-    "H")] <- 2
+    "H")] <- 2  #10^2
 storm$storm.PROPDMGEXP[(storm$storm.PROPDMGEXP == "k") | (storm$storm.PROPDMGEXP == 
-    "K")] <- 3
+    "K")] <- 3  #10^3
 storm$storm.PROPDMGEXP[(storm$storm.PROPDMGEXP == "m") | (storm$storm.PROPDMGEXP == 
-    "M")] <- 6
-storm$storm.PROPDMGEXP[(storm$storm.PROPDMGEXP == "B")] <- 9
+    "M")] <- 6  #10^6
+storm$storm.PROPDMGEXP[(storm$storm.PROPDMGEXP == "B")] <- 9  #10^9
 
-storm$storm.CROPDMGEXP[(storm$storm.CROPDMGEXP == "")] <- 0
+storm$storm.CROPDMGEXP[(storm$storm.CROPDMGEXP == "")] <- 0  #empty string is 0
 storm$storm.CROPDMGEXP[(storm$storm.CROPDMGEXP == "+") | (storm$storm.CROPDMGEXP == 
-    "-") | (storm$storm.CROPDMGEXP == "?")] <- 1
+    "-") | (storm$storm.CROPDMGEXP == "?")] <- 1  # '+', '-', '?' are mapped to 1
 storm$storm.CROPDMGEXP[(storm$storm.CROPDMGEXP == "h") | (storm$storm.CROPDMGEXP == 
-    "H")] <- 2
+    "H")] <- 2  #10^2
 storm$storm.CROPDMGEXP[(storm$storm.CROPDMGEXP == "k") | (storm$storm.CROPDMGEXP == 
-    "K")] <- 3
+    "K")] <- 3  #10^3
 storm$storm.CROPDMGEXP[(storm$storm.CROPDMGEXP == "m") | (storm$storm.CROPDMGEXP == 
-    "M")] <- 6
-storm$storm.CROPDMGEXP[(storm$storm.CROPDMGEXP == "B")] <- 9
+    "M")] <- 6  #10^6
+storm$storm.CROPDMGEXP[(storm$storm.CROPDMGEXP == "B")] <- 9  #10^9
 
 storm$storm.PROPDMGEXP <- as.integer(storm$storm.PROPDMGEXP)
 storm$storm.CROPDMGEXP <- as.integer(storm$storm.CROPDMGEXP)
@@ -137,6 +154,7 @@ require(ggplot2)
 
 ### Injuries
 
+As we can see in the following snippet and histogram, the event that causes most injuries is TORNADO.
 
 ```r
 stormInjuries <- head(stormSummary[order(stormSummary$injuries, decreasing = TRUE), 
@@ -165,6 +183,7 @@ ggplot(data = stormInjuries, aes(storm.EVTYPE, injuries)) + geom_bar(stat = "ide
 
 ### Fatalities
 
+As we can see in the following snippet and histogram, the event that causes most fatalities is TORNADO.
 
 ```r
 stormFatalities <- head(stormSummary[order(stormSummary$fatalities, decreasing = TRUE), 
@@ -192,6 +211,7 @@ ggplot(data = stormFatalities, aes(storm.EVTYPE, fatalities)) + geom_bar(stat = 
 
 
 ### Damages
+As we can see in the following snippet and histogram, the event that causes most economic damages is FLOOD.
 
 ```r
 stormDamages <- head(stormSummary[order(stormSummary$damages, decreasing = TRUE), 
@@ -212,7 +232,7 @@ print(stormDamages)
 ```r
 ggplot(data = stormDamages, aes(storm.EVTYPE, damages)) + geom_bar(stat = "identity") + 
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) + xlab("Event type") + 
-    ylab("Damages") + ggtitle("Top Damages Counts")
+    ylab("Damages ($)") + ggtitle("Top Damages Factors")
 ```
 
 ![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11.png) 
